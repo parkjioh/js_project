@@ -276,6 +276,33 @@ app.patch("/students/:id", async function (request, response, next) {
 
 app.delete("/students/:id", async function (request, response, next) {
   try {
+    const id = Number(request.params.id);
+
+    if(!Number.isInteger(id)) {
+      response.status(400).json({
+        message: "id는 숫자여야 합니다.",
+      });
+      return;
+    }
+
+    const [rows] = await pool.query(
+      "select id, name, score from students where id =?", [id]
+    );
+
+    if (rows[0] === undefined) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    await pool.query("delete from students where id = ?",[id]);
+
+    response.json({
+      message: "학생이 삭제되었습니다.",
+      student: rows[0],
+    });
+
     // TODO:
     // 1. id를 검사합니다.
     // 2. 삭제할 학생이 있는지 먼저 조회합니다.
