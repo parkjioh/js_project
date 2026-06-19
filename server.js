@@ -89,6 +89,62 @@ app.get("/health", function (request, response) {
 app.get("/students/search", async function (request, response, next) {
   try {
 
+    const minScoreQuery = request.query.minScore;
+
+    if ( typeof minScoreQuery !== "string" || minScoreQuery.trim() === "") {
+      response.status(400).json({
+        message: "minScore는 숫자여야 합니다."
+      })
+      return;
+    }
+
+    const minScore = Number(minScoreQuery);
+
+    if (!Number.isFinite(minScore)) {
+      response.status(400).json({
+        message: "minScore는 숫자여야 합니다.",
+      });
+      return;
+    }
+
+    const maxScoreQuery = request.query.maxScore;
+
+    if (typeof maxScoreQuery !== "string" || maxScoreQuery.trim() === ""){
+      response.status(400).json({
+        message: "maxScore는 숫자여야 합니다."
+      })
+      return;
+    }
+
+    const maxScore = Number(maxScoreQuery);
+
+    if (!Number.isFinite(maxScore)) {
+      response.status(400).json({
+        message: "maxScore는 숫자여야 합니다.",
+      });
+      return;
+    }
+    if( maxScore < minScore) {
+      response.status(400).json({
+        message: "minScore는 maxScore보다 크면 안됩니다. "
+      })
+      return;
+    }
+    console.log({
+      minScoreQuery,
+      maxScoreQuery,
+      minScore,
+      maxScore
+    });
+
+    const [rows] = await pool.query(
+      "SELECT id, name, score FROM students WHERE score > ? and score < ?",[minScore, maxScore]
+    );
+
+
+
+    response.json(rows);
+
 
     // TODO:
     // 1. request.query.minScore, request.query.maxScore를 읽습니다.
