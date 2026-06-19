@@ -157,6 +157,26 @@ app.post("/students", async function (request, response, next) {
 
 app.get("/students/:id", async function (request, response, next) {
   try {
+    const id = Number(request.params.id);
+    
+    if(!Number.isInteger(id)) {
+      response.status(400).json({
+        message: "id는 숫자여야 합니다.",
+      });
+      return; 
+    }
+
+    const student = await findStudentById(id);
+
+    if (student === undefined) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+    
+    response.json(student)
+
     // TODO:
     // 1. request.params.id를 정수로 바꿉니다.
     // 2. 정수가 아니면 400으로 응답합니다.
@@ -171,6 +191,77 @@ app.get("/students/:id", async function (request, response, next) {
 
 app.patch("/students/:id", async function (request, response, next) {
   try {
+
+    const id = Number(request.params.id);
+
+    if(!Number.isInteger(id)){
+      response.status(400).json({
+        message: "id는 숫자여야합니다.",
+      })
+    }
+
+    const [currentRows] = await pool.query(
+      "select id, name, score from students where id = ?", [id]
+    );
+
+    if (currentRows[0] === undefined) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+
+    const body = request.body || {};
+    const name = body.name;
+    const score = body.score;
+    const hasName = name !== undefined;
+    const hasScore = score !== undefined;
+
+   if (!hasName && !hasScore) {
+    response.status(400).json({
+      message: "수정할 name이나 score를 입력해야 합니다.",
+    });
+    return;
+  }
+
+  if (
+    hasName &&
+    (typeof name !== "string" ||
+      name.trim() === "" ||
+      name.trim().length > 50)
+  ) {
+    response.status(400).json({
+      message: "name은 1자 이상 50자 이하의 문자열이어야 합니다.",
+    });
+    return;
+  }
+
+  if (
+    hasScore &&
+    (!Number.isInteger(score) || score < 0 || score > 100)
+  ) {
+    response.status(400).json({
+      message: "score는 0부터 100 사이의 정수여야 합니다.",
+    });
+    return;
+  }
+
+  const currentStudent = currentRows[0];
+  const updatedName = hasName ? name.trim() : currentStudent.name;
+  const updatedScore = hasScore ? score : currentStudent.score;
+
+  await pool.query(
+    "UPDATE students SET name = ?, score = ? WHERE id = ?",
+    [updatedName, updatedScore, id]
+  );
+
+  const [updatedRows] = await pool.query(
+    "SELECT id, name, score FROM students WHERE id = ?",
+    [id]
+  );
+
+  response.json(updatedRows[0]);
+
     // TODO:
     // 1. id를 검사합니다.
     // 2. 수정할 학생이 있는지 조회합니다.
