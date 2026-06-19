@@ -365,6 +365,21 @@ app.delete("/students/:id", async function (request, response, next) {
   }
 });
 
+app.get ("/classrooms", async function (request, response, next) {
+  try{
+    const [rows] = await pool.query(
+      "select name from classrooms order by id "
+    );
+    response.json(rows);
+
+    sendTodo(response, "GET /classrooms");
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
 app.use(function (request, response) {
   response.status(404).json({
     message: "요청한 API를 찾을 수 없습니다.",
