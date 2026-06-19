@@ -74,6 +74,14 @@ async function findStudentById(id) {
   return rows[0];
 }
 
+async function findClassroomById(id) {
+  const [rows] = await pool.query(
+    "SELECT id, name FROM classrooms WHERE id = ?",
+    [id]
+  );
+
+  return rows[0];
+}
 function sendTodo(response, apiName) {
   response.status(501).json({
     message: `${apiName} API를 구현해야 합니다.`,
@@ -155,7 +163,9 @@ app.get("/students/search", async function (request, response, next) {
 app.get("/students", async function (request, response, next) {
   try {
     const [rows] = await pool.query(
-      "SELECT id, name, score FROM students ORDER by id"
+      `select s.id, s.name, s.score, c.id as classroomId, c.name as classroomName
+    from students as s left join classrooms as c on s.classroom_id = c.id
+    order by s.id`, 
     );
 
     response.json(rows);
@@ -368,11 +378,79 @@ app.delete("/students/:id", async function (request, response, next) {
 app.get ("/classrooms", async function (request, response, next) {
   try{
     const [rows] = await pool.query(
-      "select name from classrooms order by id "
+      "select id, name from classrooms order by id "
     );
     response.json(rows);
 
     sendTodo(response, "GET /classrooms");
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+app.patch("/students/:id/classroom", async function (request,response, next){
+try {
+
+    const id = Number(request.params.id);
+
+    if(!Number.isInteger(id)){
+      response.status(400).json({
+        message: "id는 숫자여야합니다.",
+      });
+      return;
+    }
+
+    const student = await findStudentById(id);
+
+    if (student === undefined) {
+      response.status(404).json({
+        message: "학생을 찾을 수 없습니다.",
+      });
+      return;
+    }
+  
+    const body = request.body || {};
+    const classroomId = body.classroomId; //숫자 
+
+    console.log(request.params);
+    console.log(request.body);
+    console.log(request.params);
+
+
+
+  const classroom = await findClassroomById(classroomId);
+
+  if(classroomId !== null ){
+      if(!classroom) {
+      response.status(400).json({
+        message: "해당 강의실이 존재하지 않습니다."
+      });
+      return;
+    }
+  }
+  
+  const [result] = await pool.query(
+    "UPDATE students set classroom_id = ? where id =? ",[classroomId, id]
+  )
+
+  if(result.affectedRows === 0 ){
+    response.status(404).json({
+      message: "학생을 찾을 수 없습니다.",
+    })
+    return;
+  }
+
+  const [updatedRows] = await pool.query(
+    `select s.id, s.name, s.score, c.id as classroomId, c.name as classroomName
+    from students as s left join classrooms as c on s.classroom_id = c.id
+    where s.id = ?
+    order by s.id`, [id]
+  );
+  
+  response.json(updatedRows[0]);
+  
+  // sendTodo(response, "PATCH /students/:id");
   } catch (error) {
     next(error);
   }
