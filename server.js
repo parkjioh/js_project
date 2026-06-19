@@ -130,15 +130,9 @@ app.get("/students/search", async function (request, response, next) {
       })
       return;
     }
-    console.log({
-      minScoreQuery,
-      maxScoreQuery,
-      minScore,
-      maxScore
-    });
-
+    
     const [rows] = await pool.query(
-      "SELECT id, name, score FROM students WHERE score > ? and score < ?",[minScore, maxScore]
+      "SELECT id, name, score FROM students WHERE score >= ? and score <= ?",[minScore, maxScore]
     );
 
 
