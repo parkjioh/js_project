@@ -88,6 +88,8 @@ app.get("/health", function (request, response) {
 
 app.get("/students/search", async function (request, response, next) {
   try {
+
+
     // TODO:
     // 1. request.query.minScore, request.query.maxScore를 읽습니다.
     // 2. 숫자인지 검사합니다.
@@ -102,6 +104,11 @@ app.get("/students/search", async function (request, response, next) {
 
 app.get("/students", async function (request, response, next) {
   try {
+    const [rows] = await pool.query(
+      "SELECT id, name, score FROM students ORDER by id"
+    );
+
+    response.json(rows);
     // TODO:
     // 1. students table에서 id, name, score를 조회합니다.
     // 2. id 오름차순으로 정렬합니다.
