@@ -145,7 +145,7 @@ app.get("/students/search", async function (request, response, next) {
 
 
 
-    response.json(rows);
+    return response.json(rows);
 
 
     // TODO:
@@ -168,7 +168,7 @@ app.get("/students", async function (request, response, next) {
     order by s.id`, 
     );
 
-    response.json(rows);
+    return response.json(rows);
 
     // TODO:
     // 1. students table에서 id, name, score를 조회합니다.
@@ -235,7 +235,7 @@ app.get("/students/:id", async function (request, response, next) {
       return;
     }
     
-    response.json(student)
+    return response.json(student)
 
     // TODO:
     // 1. request.params.id를 정수로 바꿉니다.
@@ -320,7 +320,7 @@ app.patch("/students/:id", async function (request, response, next) {
     [id]
   );
 
-  response.json(updatedRows[0]);
+  return response.json(updatedRows[0]);
 
     // TODO:
     // 1. id를 검사합니다.
@@ -358,7 +358,7 @@ app.delete("/students/:id", async function (request, response, next) {
 
     await pool.query("delete from students where id = ?",[id]);
 
-    response.json({
+    return response.json({
       message: "학생이 삭제되었습니다.",
       student: rows[0],
     });
@@ -380,7 +380,7 @@ app.get ("/classrooms", async function (request, response, next) {
     const [rows] = await pool.query(
       "select id, name from classrooms order by id "
     );
-    response.json(rows);
+    return response.json(rows);
 
     sendTodo(response, "GET /classrooms");
   } catch (error) {
@@ -448,7 +448,7 @@ try {
     order by s.id`, [id]
   );
   
-  response.json(updatedRows[0]);
+  return response.json(updatedRows[0]);
   
   // sendTodo(response, "PATCH /students/:id");
   } catch (error) {
